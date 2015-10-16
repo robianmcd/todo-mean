@@ -5,42 +5,73 @@ var app = express(); // define our app using express
 var bodyParser = require('body-parser'); // get body-parser
 var port = process.env.PORT || 8080; // set the port for our app
 
+var mongoose = require('mongoose');
+mongoose.connect('mongodb://admin:admin@ds041831.mongolab.com:41831/todo-mean');
+
 // use body parser so we can grab information from POST requests
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-
+//Statically serve up the files in the client folder
 app.use(express.static(__dirname + '/../client'));
 
-var nextId = 3;
+var todoSchema = mongoose.Schema({
+    text: String, 
+	done: Boolean
+});
 
-var todos = [
-	{id: '0', text: 'learn express', done: false },
-	{id: '1', text: 'do a barrel roll', done: false },
-	{id: '2', text: 'drink a beer', done: true }
-];
+var Todo = mongoose.model('Todo', todoSchema);
+
+// //Initialize Database
+// var todo = new Todo({text: 'learn express', done: false });
+// todo.save();
+// var todo2 = new Todo({text: 'do a barrel roll', done: false });
+// todo2.save();
+// var todo3 = new Todo({text: 'drink a beer', done: true });
+// todo3.save();
 
 //Get Todos Route
 app.get('/api/todos', function (req, res) {
-	res.send(todos);
+	Todo.find(function (err, todos) {
+	  if (err) return res.status(500).send(err);
+	  res.send(todos);
+	})
 });
 
 //Create Todo Route
 app.post('/api/todos', function (req, res) {
-	var todo = req.body;
-	todo.id = nextId.toString();
-	nextId++;
-	todos.push(req.body);
-	res.send(todos);
+	var newTodo = new Todo(req.body);
+	newTodo.save(function(err, todo) {
+		if (err) return res.status(500).send(err);
+		res.send(todo);
+	});
+
 });
 
 //Delete Todo Route
 app.delete('/api/todos/:id', function(req, res) {
-	todos = todos.filter(function(todo) {
-		return todo.id !== req.params.id;
+	Todo.remove({_id: req.params.id}, function(err) {
+		if (err) return res.status(500).send(err);
+		res.status(204).send();
 	});
-	
-	res.send(todos);
+});
+
+//Update Todo Route
+app.put('/api/todos/:id', function(req, res) {
+	Todo.findOne({_id: req.params.id}).exec()
+		.then(function(todo) {
+			var newTodo = req.body;
+			todo.text = newTodo.text;
+			todo.done = newTodo.done;
+			return todo.save();
+		})
+		.then(function(todo) {
+			res.send(todo);
+		})
+		//Error handler
+		.then(null, function(err) {
+			res.status(500).send(err)
+		});
 });
 
 

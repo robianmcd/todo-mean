@@ -28,18 +28,28 @@ TodoCtrl.prototype.addTodo = function() {
   var newTodo = {text: ctrl.newTodoText, done: false};
   
   ctrl.$http.post('/api/todos', newTodo).then(function(response) {
-    ctrl.todos = response.data;
+    ctrl.todos.push(response.data);
     ctrl.newTodoText = '';
   });
   
+}
+
+TodoCtrl.prototype.saveTodo = function(todo) {
+  var ctrl = this;
+  
+  ctrl.$http.put('/api/todos/' + todo._id, todo);
 }
 
 TodoCtrl.prototype.clearComplete = function() {
   var ctrl = this;
   ctrl.todos.forEach(function(todo) {
     if (todo.done) {
-      ctrl.$http.delete('/api/todos/' + todo.id).then(function(response) {
-        ctrl.todos = response.data;
+      console.log(todo);
+      ctrl.$http.delete('/api/todos/' + todo._id).then(function(response) {
+        var i = ctrl.todos.indexOf(todo);
+        if(i != -1) {
+        	ctrl.todos.splice(i, 1);
+        }
       });
     }
   });

@@ -28,7 +28,7 @@
       
       <li class="list-group-item" ng-repeat="todo in ctrl.todos" ng-show="ctrl.selectedFilter.showTodo(todo)">
         <label ng-class="{done: todo.done}">
-          <input type="checkbox" ng-model="todo.done">
+          <input type="checkbox" ng-model="todo.done" ng-change="ctrl.saveTodo(todo)">
           {{todo.text}}
         </label>
       </li>
